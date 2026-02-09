@@ -53,6 +53,29 @@ POST {{apiurl}}/users/login
 Content-Type: application/json
 
 {
-  "username": "donald",
-  "password": "duck"
+  "username": "bob_brown",
+  "password": "hashed_password"
+}
+
+
+##############################
+### Diary entry endpoints
+
+### Get all entries
+GET {{apiurl}}/entries
+
+### Get entry by id
+GET {{apiurl}}/entries/6
+
+### Post new entry
+POST {{apiurl}}/entries
+Content-Type: application/json
+
+{
+  "user_id": 3,
+  "entry_date": "2026-02-04",
+  "mood": "really happy",
+  "weight": 66,
+  "sleep_hours": 5,
+  "notes": "normipäivä"
 }

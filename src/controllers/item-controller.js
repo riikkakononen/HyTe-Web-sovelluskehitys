@@ -1,16 +1,11 @@
-// Dummy mock data (nollautuu aina, kun sovelluksen käynnistää uudelleen)
-const items = [
-  {id: 1, name: 'Omena'},
-  {id: 2, name: 'Appelsiini'},
-  {id: 3, name: 'Banaaneja'},
-];
+import items from '../models/item-model.js';
 
 const getItems = (req, res) => {
   res.json(items);
 };
 
 const getItemById = (req, res) => {
-  console.log('getting item:', req.params.id);
+  console.log('getting item id:', req.params.id);
   const itemFound = items.find((item) => item.id == req.params.id);
   if (itemFound) {
     res.json(itemFound);
@@ -20,7 +15,7 @@ const getItemById = (req, res) => {
 };
 
 const putItemById = (req, res) => {
-  console.log('updating item:', req.params.id);
+  console.log('updating item id:', req.params.id);
   const itemIndex = items.findIndex((item) => item.id == req.params.id);
   if (itemIndex !== -1) {
     items[itemIndex] = {...items[itemIndex], ...req.body};
@@ -31,7 +26,7 @@ const putItemById = (req, res) => {
 };
 
 const deleteItemById = (req, res) => {
-  console.log('deleting item:', req.params.id);
+  console.log('deleting item id:', req.params.id);
   const itemIndex = items.findIndex((item) => item.id == req.params.id);
   if (itemIndex !== -1) {
     items.splice(itemIndex, 1);
