@@ -1,11 +1,11 @@
 {
   "name": "project",
   "version": "1.0.0",
-  "description": "Task1",
+  "description": "weekly tasks",
   "license": "ISC",
   "author": "riikkakononen",
   "type": "module",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
@@ -17,9 +17,12 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.0.0",
     "nodemon": "^3.1.11",
-    "prettier": "3.8.0"
+    "prettier": "3.7.4"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "mysql2": "^3.16.2"
   }
 }

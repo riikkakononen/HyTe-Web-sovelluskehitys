@@ -53,10 +53,9 @@ POST {{apiurl}}/users/login
 Content-Type: application/json
 
 {
-  "username": "bob_brown",
+  "username": "johndoe",
   "password": "hashed_password"
 }
-
 
 ##############################
 ### Diary entry endpoints

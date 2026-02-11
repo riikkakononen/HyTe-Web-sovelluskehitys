@@ -1,7 +1,8 @@
 import promisePool from '../utils/database.js';
 
 
-// TODO: lisää modelit ja muokkaa kontrollerit reiteille:
+// DONE: lisää modelit ja muokkaa kontrollerit reiteille:
+
 // GET /api/users - list all users
 
 const listAllUsers = async () => {
@@ -18,7 +19,7 @@ const listAllUsers = async () => {
 
 // GET /api/users/:id - get user by id
 
-const getUserById = async(id) => {
+const findUserById = async(id) => {
   try {
     const [rows] = await promisePool.execute('SELECT * FROM Users WHERE user_id = ?', [id]);
 
@@ -29,12 +30,29 @@ const getUserById = async(id) => {
     return {error: e.message}
   }
 };
+
+// PUT /api/users/:id - update user by id
+
+const updateUserById = async (id, user) => {
+  const {username, email} = user;
+
+  const sql = `UPDATE Users SET username = ?, email = ? WHERE user_id = ?`;
+  const params = [username, email, id];
+  try {
+    const [result] = await promisePool.execute(sql, params);
+    return result;
+  } catch (e) {
+    console.error('error', e.message);
+    return { error: e.message };
+  }
+};
+
 // POST /api/users - add a new user
 
 const addUser = async (user) => {
   const {username, password, email} = user;
   const sql = `INSERT INTO Users (username, password, email)
-               VALUES (?, ?, ?, ?, ?, ?)`;
+               VALUES (?, ?, ?)`;
   const params = [username, password, email];
   try {
     const result = await promisePool.execute(sql, params);
@@ -47,8 +65,10 @@ const addUser = async (user) => {
 };
 
 // Huom: virheenkäsittely lisätty
+
 const findUserByUsername = async (username) => {
   const sql = 'SELECT * FROM Users WHERE username = ?';
+
   try {
   const [rows] = await promisePool.execute(sql, [username]);
   return rows[0];
@@ -58,4 +78,16 @@ const findUserByUsername = async (username) => {
   }
 };
 
-export {findUserByUsername};
+const deleteUserById = async(id) => {
+  const sql = 'DELETE FROM Users WHERE user_id = ?';
+
+  try {
+    const [result] = await promisePool.execute(sql [id]);
+    return result;
+  } catch (e) {
+    console.error('error', e.message);
+    return { error: e.message };
+  }
+};
+
+export {listAllUsers, findUserById, updateUserById, addUser, findUserByUsername, deleteUserById};
