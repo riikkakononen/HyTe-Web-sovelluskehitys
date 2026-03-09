@@ -29,7 +29,7 @@ CREATE TABLE MentalHealth (
     entry_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     entry_date DATE NOT NULL,
-    mood VARCHAR(50),
+    mood TEXT,
     notes TEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id)

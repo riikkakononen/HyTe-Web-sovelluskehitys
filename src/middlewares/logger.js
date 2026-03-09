@@ -1,8 +1,16 @@
-const requestLogger = (req, res, next) => {
-  console.log(new Date().toLocaleString('fi-EN'), req.method, req.url);
+const requestLogger = (req, res, next) => { 
+  console.log(new Date().toLocaleString('en-EN'), req.method, req.url);
+
   if (req.body) {
-    console.log('body:', req.body);
+    const safeBody = { ...req.body };
+
+    if (safeBody.password) {
+      safeBody.password = '***';
+    }
+
+    console.log('body:', safeBody);
   }
+
   next();
 };
 

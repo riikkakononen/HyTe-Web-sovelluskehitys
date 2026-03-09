@@ -1,9 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import itemRouter from './routes/item-router.js';
-import userRouter from './routes/user-router.js';
+import 'dotenv/config';
 import requestLogger from './middlewares/logger.js';
-import entryRouter from './routes/entry-router.js';
+import userRouter from './routes/user-router.js';
+import physicalhealthRouter from './routes/physicalhealth-router.js';
+import mentalhealthRouter from './routes/mentalhealth-router.js';
 const hostname = '127.0.0.1';
 const app = express();
 const port = 3000;
@@ -25,12 +26,10 @@ app.get('/api', (req, res) => {
 
 // Users resource router for all /api/users routes
 app.use('/api/users', userRouter);
-// Diary entries resource router
-app.use('/api/entries', entryRouter);
-
-
-// Dummy items resource
-app.use('/api/items', itemRouter);
+// PhysicalHealth resource router
+app.use('/api/physicalhealth', physicalhealthRouter);
+// MentalHealth resource router
+app.use('/api/mentalhealth', mentalhealthRouter);
 
 app.listen(port, hostname, () => {
   console.log(`Server running at http://${hostname}:${port}/`);

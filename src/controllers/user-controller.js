@@ -1,114 +1,63 @@
-// HUOM: mokkidata on poistettu modelista
-//import users from '../models/user-model.js';
-
-import {listAllUsers, findUserById, updateUserById, addUser, findUserByUsername, deleteUserById} from '../models/user-model.js';
-
-
-// TODO: lisää tietokantafunktiot user modeliin
-// ja käytä niitä täällä
-
-// DONE: refaktoroi tietokantafunktiolle
-const getUsers = async (req, res) => {
-  const result = await listAllUsers();
-  if (result?.error) return res.status(500).json(result);
-  // ÄLÄ IKINÄ lähetä salasanoja HTTP-vastauksessa
-  for (let i = 0; i < result.length; i++) {
-    delete result[i].password;
-    // kaikki emailit sensuroitu esimerkki
-    result[i].email = 'sensored';
-  }
-  res.json(result);
-};
-
-// TODO: getUserById
-
-const getUserById = async(req, res) => {
-  const user = await findUserById(req.params.id);
-
-  if (!user) return res.sendStatus(404);
-  if (user?.error) return res.status(500).json(user);
-
-  delete user.password;
-  user.email = 'sensored';
-
-  res.json(user);
-};
-
-// TODO: putUserById
-
-const putUserById = async (req, res) => {
-  const id = Number(req.params.id);
-
-  const { username, email } = req.body;
-  if (!username || !email) {
-    return res.status(400).json({ error: 'required fields missing' });
-  }
-
-  const result = await updateUserById(id, { username, email });
-
-  if (result?.error) {
-    return res.status(500).json(result);
-  }
-
-  // jos id:tä ei ollut olemassa
-  if (result.affectedRows === 0) {
-    return res.status(404).json({ error: 'user not found' });
-  }
-
-  res.status(200).json({ message: 'user updated' });
-};
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import {addUser, findUserByEmail} from '../models/user-model.js';
 
 
-// TODO: deleteUserById
+// NEW USER REGISTRATION
 
-const deleteUser = async (req, res) => {
-  const id = Number(req.params.id);
-
-  const result = await deleteUserById(id);
-  if (result?.error) {
-    return res.status(500).json(result);
-  }
-
-  if (result.affectedRows === 0) {
-    return res.status(404).json({ error: 'user not found' });
-  }
-
-  res.status(204).send();
-};
-
-// Käyttäjän lisäys (rekisteröityminen)
-// TODO: refaktoroi tietokantafunktiolle
 const postUser = async (req, res) => {
-  const { username, password, email } = req.body;
-
-  if (!username || password || email) {
-    return res.status(400).json({error: 'required fields missing'});
+  const {username, password, email} = req.body; // Otetaan pyynnöstä käyttäjänimi, salasana ja sähköposti talteen
+  if (!username || !password || !email) {
+    return res.status(400).json({error: 'required fields missing'}); // Varmistetaan, ettei tietoja puutu
   }
-
-  const result = await addUser({ username, password, email });
-
+  const normalizedEmail = email.trim().toLowerCase(); // Muutetaan sähköposti sisältämään vaan pieniä kirjaimia
+  const existingUser = await findUserByEmail(normalizedEmail); // Tarkistetaan, ettei käyttäjää jo ole olemassa
+  if (existingUser?.error) {
+    return res.status(500).json(existingUser);
+  }
+  if (existingUser) {
+    return res.status(409).json({error: 'email already in use'}); // Tarkistetaan, ettei käyttäjää ole jo olemassa
+  }
+  if (typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({error: 'password too short'}); // Varmistetaan että salasana on ainakin 8 merkkiä
+  }
+  const salt = await bcrypt.genSalt(10); // Luodaan salasanalle salt (jotta hashaus on uniikki vaikka sama salasana olisi usealla käyttäjällä käytössä)
+  const hashedPassword = await bcrypt.hash(password, salt); // hashataan salasana
+  const result = await addUser({username, email: normalizedEmail, password: hashedPassword}); // Annetaan user-modelin addUserille tarvittavat tiedot
   if (result?.error) {
     return res.status(500).json(result);
   }
-
-  res.status(201).json({ message: 'new user added', user_id: result.user_id });
+  return res.status(201).json({message: 'new user added', user_id: result.user_id});
 };
 
-// Tietokantaversio valmis
+
+// USER LOGIN
+
 const postLogin = async (req, res) => {
-  const {username, password} = req.body;
-  // haetaan käyttäjä-objekti käyttäjän nimen perusteella
-  const user = await findUserByUsername(username);
-  //console.log('postLogin user from db', user);
-  if (user) {
-    if (user.password === password) {
-      delete user.password;
-      return res.json({message: 'login ok', user: user});
-    }
-    return res.status(403).json({error: 'invalid password'});
+  const {email, password} = req.body; // Otetaan pyynnöstä talteen sähköposti ja salasana
+  if (!email || !password) {
+    return res.status(400).json({error: 'required fields missing'}); // Varmistetaan ettei tietoja puutu
   }
-  res.status(404).json({error: 'user not found'});
+
+  const normalizedEmail = email.trim().toLowerCase(); // Trimmataan sähköposti sisältämään vaan pieniä kirjaimia
+  const user = await findUserByEmail(normalizedEmail); // Annetaan user-modelin findUserByEmailille trimmattu sähköposti
+  if (user?.error) {
+    return res.status(500).json(user);
+  }
+  if (!user) {
+    return res.status(403).json({error: 'invalid email or password'}); // Jos käyttäjää ei löydy, annetaan virheilmoitus (tietosuojan takia ei kerrota onko ongelma sähköpostissa vai salasanassa)
+  }
+  const match = await bcrypt.compare(password, user.password); // Verrataan käyttäjän syöttämän salasanan hashia tietokannan hashiin
+  if (!match) {
+    return res.status(403).json({error: 'invalid email or password'}); // Ei matchaa
+  }
+  delete user.password; // Matchaa --> poistetaan salasana
+  const token = jwt.sign(
+    {id: user.user_id, email: user.normalizedEmail},
+    process.env.JWT_SECRET,
+    {expiresIn: process.env.JWT_EXPIRES_IN,} // Luodaan token
+  );
+  return res.json({message: 'login ok', token, user});
 };
 
-
-export {getUsers, getUserById, putUserById, deleteUser, postUser, postLogin};
+export {postUser, postLogin};
